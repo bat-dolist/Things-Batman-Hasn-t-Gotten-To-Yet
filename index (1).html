@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>The Bat-Do List</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Bat-Do List" />
+<meta name="theme-color" content="#E8C84A" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #E8E0C8;
+    color: #3D2800;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1.5rem 1rem 3rem;
+    min-height: 100vh;
+  }
+
+  .pad {
+    width: 100%;
+    max-width: 620px;
+    background: #FEF9C3;
+    border-radius: 3px;
+    box-shadow: 2px 4px 18px rgba(0,0,0,0.18), -1px 1px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .pad-top {
+    background: #E8C84A;
+    padding: 14px 20px 12px;
+    border-bottom: 4px solid #C8A830;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .pad-top-left { display: flex; align-items: center; gap: 11px; }
+  .bat-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+  .title-block { display: flex; flex-direction: column; gap: 1px; }
+  .title-block h1 { font-size: 20px; font-weight: 700; color: #3D2800; letter-spacing: 0.01em; line-height: 1.1; }
+  .title-block .sub { font-size: 11px; color: #7A5500; font-weight: 400; letter-spacing: 0.03em; }
+
+  .sync-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.4);
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; color: #7A5500; font-weight: 500;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #5C3D00; flex-shrink: 0; transition: background 0.3s; }
+  .sync-dot.saved { background: #3B6D11; }
+  .sync-dot.saving { background: #B45309; }
+  .sync-dot.error { background: #A32D2D; }
+
+  /* Body */
+  .pad-body { padding: 1.25rem 1.5rem 2rem; }
+
+  .add-row { display: flex; gap: 8px; margin-bottom: 1.4rem; }
+  .add-row input {
+    flex: 1; font-size: 15px; padding: 9px 14px;
+    border: 1px solid #BFAB4A; border-radius: 8px;
+    background: #FFFDE7; color: #3D2800; outline: none;
+    font-family: inherit; font-weight: 400;
+  }
+  .add-row input:focus { border-color: #8A7000; box-shadow: 0 0 0 3px rgba(138,112,0,0.12); }
+  .add-row input::placeholder { color: #C4A84A; }
+  .add-row button {
+    padding: 9px 18px; border: 1px solid #BFAB4A; border-radius: 8px;
+    background: #FFFDE7; color: #5C3D00; cursor: pointer;
+    font-size: 14px; font-weight: 700; font-family: inherit; white-space: nowrap;
+  }
+  .add-row button:hover { background: #FEF08A; }
+  .add-row button:active { transform: scale(0.97); }
+
+  /* Task rows */
+  .task-list { display: flex; flex-direction: column; }
+
+  .task-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 8px; border-bottom: 1px solid #EAD97C;
+    position: relative; transition: background 0.1s;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-item:hover { background: rgba(255,255,255,0.6); border-radius: 6px; }
+
+  .task-check {
+    width: 20px; height: 20px; border: 2px solid #C8A830; border-radius: 5px;
+    cursor: pointer; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; background: transparent; transition: all 0.15s;
+  }
+  .task-check:hover { border-color: #7A5500; background: rgba(200,168,48,0.14); }
+  .task-item.done .task-check { background: #7A6200; border-color: #7A6200; }
+  .chk { display: none; }
+  .task-item.done .chk { display: block; }
+
+  .task-text {
+    flex: 1; font-size: 15px; color: #3D2800; cursor: pointer;
+    line-height: 1.4; min-width: 0; font-weight: 400;
+  }
+  .task-item.done .task-text { color: #C4A84A; text-decoration: line-through; }
+  .task-item.has-notes .task-text::after {
+    content: ''; display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #B45309; margin-left: 8px; vertical-align: middle;
+  }
+
+  .task-date { font-size: 11px; color: #B09040; white-space: nowrap; flex-shrink: 0; }
+
+  .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.12s; }
+  .task-item:hover .task-actions { opacity: 1; }
+
+  .icon-btn {
+    width: 30px; height: 30px; border: none; background: transparent;
+    cursor: pointer; border-radius: 6px; display: flex; align-items: center;
+    justify-content: center; color: #9A7C20; font-size: 18px;
+  }
+  .icon-btn:hover { background: rgba(0,0,0,0.07); color: #5C3D00; }
+
+  .section-label {
+    font-size: 11px; color: #B09040; padding: 10px 8px 5px;
+    letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .count-pill {
+    background: rgba(92,61,0,0.13); color: #5C3D00;
+    font-size: 11px; font-weight: 700; border-radius: 10px;
+    padding: 1px 7px;
+  }
+  .divider { height: 2px; background: #EAD97C; margin: 0.75rem 0 0; }
+
+  .empty {
+    text-align: center; padding: 3rem 1rem; color: #C4A84A; font-size: 14px;
+  }
+  .empty-bat { font-size: 40px; display: block; margin-bottom: 10px; }
+
+  /* Modal */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(40,28,0,0.45);
+    align-items: center; justify-content: center;
+    z-index: 100; padding: 1rem;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #FFFDE7; border: 1px solid #BFAB4A; border-radius: 12px;
+    padding: 1.5rem; width: 100%; max-width: 460px;
+    box-shadow: 0 10px 36px rgba(0,0,0,0.22);
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: #3D2800; margin-bottom: 3px; }
+  .modal-meta { font-size: 12px; color: #B09040; margin-bottom: 1rem; }
+  .modal textarea {
+    width: 100%; min-height: 120px; font-size: 14px; padding: 10px 13px;
+    border: 1px solid #BFAB4A; border-radius: 8px; background: #FEF9C3;
+    color: #3D2800; font-family: inherit; resize: vertical; outline: none; line-height: 1.6;
+  }
+  .modal textarea:focus { border-color: #8A7000; box-shadow: 0 0 0 2px rgba(138,112,0,0.12); }
+  .modal textarea::placeholder { color: #C4A84A; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1rem; }
+  .modal-footer button {
+    padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: 1px solid #BFAB4A; background: transparent;
+    color: #5C3D00; font-family: inherit;
+  }
+  .modal-footer button:hover { background: #FEF08A; }
+  .modal-footer .btn-save { background: #7A6200; border-color: #7A6200; color: #fff; }
+  .modal-footer .btn-save:hover { background: #5C3D00; border-color: #5C3D00; }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute; right: 8px; top: calc(100% + 5px);
+    min-width: 180px; max-width: 260px;
+    background: #FFFDE7; border: 1px solid #BFAB4A; border-radius: 7px;
+    padding: 9px 11px; font-size: 12.5px; color: #5C3D00;
+    z-index: 50; line-height: 1.5; pointer-events: none;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    body { padding: 0; align-items: stretch; }
+    .pad { border-radius: 0; min-height: 100vh; box-shadow: none; }
+    .task-actions { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pad">
+  <div class="pad-top">
+    <div class="pad-top-left">
+      <span class="bat-icon" aria-hidden="true">🦇</span>
+      <div class="title-block">
+        <h1>The Bat-Do List</h1>
+        <span class="sub">Gotham's most organized vigilante</span>
+      </div>
+    </div>
+    <div class="sync-badge">
+      <div class="sync-dot saved" id="sync-dot"></div>
+      <span id="sync-label">Saved</span>
+    </div>
+  </div>
+
+  <div class="pad-body">
+    <div class="add-row">
+      <input type="text" id="new-task" placeholder="What needs doing tonight?" autocomplete="off" />
+      <button onclick="addTask()">+ Add</button>
+    </div>
+
+    <div id="active-list" class="task-list"></div>
+
+    <div id="done-section" style="display:none;">
+      <div class="divider"></div>
+      <div class="section-label">
+        Completed
+        <span class="count-pill" id="done-count">0</span>
+      </div>
+      <div id="done-list" class="task-list"></div>
+    </div>
+
+    <div id="empty-state" class="empty" style="display:none;">
+      <span class="empty-bat" aria-hidden="true">🦇</span>
+      The city is safe for now.<br>Add a task above to get started.
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="modal-bg" onclick="handleBgClick(event)">
+  <div class="modal">
+    <div id="modal-title" class="modal-title"></div>
+    <div id="modal-meta" class="modal-meta"></div>
+    <textarea id="modal-notes" placeholder="Notes, links, intel — anything useful for this mission."></textarea>
+    <div class="modal-footer">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveNotes()">Save notes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'bat-do-list-v1';
+  let tasks = [];
+  let editingId = null;
+  let tooltipEl = null;
+  let tooltipTimer = null;
+  let saveTimer = null;
+
+  function setSyncStatus(state, label) {
+    document.getElementById('sync-dot').className = 'sync-dot ' + state;
+    document.getElementById('sync-label').textContent = label;
+  }
+
+  function fmtDate(iso) {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function save() {
+    clearTimeout(saveTimer);
+    setSyncStatus('saving', 'Saving...');
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        setSyncStatus('saved', 'Saved');
+      } catch(e) {
+        setSyncStatus('error', 'Save failed');
+      }
+    }, 400);
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      tasks = raw ? JSON.parse(raw) : [];
+    } catch(e) { tasks = []; }
+    render();
+    setSyncStatus('saved', 'Saved');
+  }
+
+  function addTask() {
+    const inp = document.getElementById('new-task');
+    const text = inp.value.trim();
+    if (!text) return;
+    tasks.unshift({ id: Date.now(), text, done: false, notes: '', created: new Date().toISOString() });
+    inp.value = '';
+    render(); save();
+  }
+
+  document.getElementById('new-task').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  function toggleDone(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; render(); save(); }
+  }
+
+  function deleteTask(id) {
+    if (!confirm('Remove this task?')) return;
+    tasks = tasks.filter(t => t.id !== id);
+    render(); save();
+  }
+
+  function openModal(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t) return;
+    editingId = id;
+    document.getElementById('modal-title').textContent = t.text;
+    document.getElementById('modal-meta').textContent = 'Added ' + fmtDate(t.created);
+    document.getElementById('modal-notes').value = t.notes || '';
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('modal-notes').focus(), 60);
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    editingId = null;
+  }
+
+  function handleBgClick(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  function saveNotes() {
+    const t = tasks.find(t => t.id === editingId);
+    if (t) { t.notes = document.getElementById('modal-notes').value.trim(); render(); save(); }
+    closeModal();
+  }
+
+  function showTooltip(id, el) {
+    const t = tasks.find(t => t.id === id);
+    if (!t || !t.notes) return;
+    clearTooltip();
+    tooltipTimer = setTimeout(() => {
+      const item = el.closest('.task-item');
+      const tip = document.createElement('div');
+      tip.className = 'tooltip';
+      tip.textContent = t.notes.length > 140 ? t.notes.slice(0, 137) + '…' : t.notes;
+      item.appendChild(tip);
+      tooltipEl = tip;
+    }, 320);
+  }
+
+  function clearTooltip() {
+    clearTimeout(tooltipTimer);
+    if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function render() {
+    const active = tasks.filter(t => !t.done);
+    const done = tasks.filter(t => t.done);
+    document.getElementById('empty-state').style.display = tasks.length === 0 ? 'block' : 'none';
+    document.getElementById('done-section').style.display = done.length > 0 ? 'block' : 'none';
+    const dc = document.getElementById('done-count');
+    if (dc) dc.textContent = done.length;
+    renderList('active-list', active);
+    renderList('done-list', done);
+  }
+
+  function renderList(elId, list) {
+    const el = document.getElementById(elId);
+    el.innerHTML = '';
+    list.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'task-item' + (t.done ? ' done' : '') + (t.notes ? ' has-notes' : '');
+      div.innerHTML = `
+        <div class="task-check" onclick="toggleDone(${t.id})" title="${t.done ? 'Mark undone' : 'Mark done'}">
+          <svg class="chk" viewBox="0 0 24 24" width="12" height="12" stroke="#fff" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <span class="task-text"
+          onclick="openModal(${t.id})"
+          onmouseenter="showTooltip(${t.id}, this)"
+          onmouseleave="clearTooltip()"
+        >${escHtml(t.text)}</span>
+        <span class="task-date">${fmtDate(t.created)}</span>
+        <div class="task-actions">
+          <button class="icon-btn" onclick="openModal(${t.id})" title="Add / edit notes" aria-label="Edit notes">
+            &#x1F4DD;
+          </button>
+          <button class="icon-btn" onclick="deleteTask(${t.id})" title="Delete task" aria-label="Delete task">
+            &#x1F5D1;
+          </button>
+        </div>`;
+      el.appendChild(div);
+    });
+  }
+
+  load();
+</script>
+</body>
+</html>
